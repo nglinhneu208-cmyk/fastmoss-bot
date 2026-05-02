@@ -15,9 +15,10 @@ async function B1_FETCH_PRODUCTS() {
 
     const res = await fetch(url, {
       headers: {
-        "user-agent": "Mozilla/5.0",
-        "referer": "https://www.fastmoss.com/vi/e-commerce/saleslist?region=VN"
-      }
+  "user-agent": "Mozilla/5.0",
+  "referer": "https://www.fastmoss.com/vi/e-commerce/saleslist?region=VN",
+  "cookie": process.env.FASTMOSS_COOKIE
+}
     });
 
     const json = await res.json();
