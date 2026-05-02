@@ -5,7 +5,7 @@ const SPREADSHEET_ID = "1M5RCNcFkoA89vJWdTv7Xr7NaUHxIdE4bzZ8gLNmMS1M";
 async function B1_FETCH_PRODUCTS() {
   console.log("START_FETCH_API");
 
-  const res = await fetch("https://developers.fastmoss.com/product/v1/rank/topSelling", {
+  const res = await fetch("https://openapi.fastmoss.com/product/v1/rank/topSelling", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
