@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 
-const SPREADSHEET_ID = "1J0lmeoTnc26Fsr4GPpTlm0L3rpS1YVYteJPH1qYD2S4";
+const SPREADSHEET_ID = "1M5RCNcFkoA89vJWdTv7Xr7NaUHxIdE4bzZ8gLNmMS1M";
 
 function B2_USE_STATIC_DATA() {
   console.log("B2_STATIC_DATA_OK");
