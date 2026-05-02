@@ -2,7 +2,7 @@ name: Run Bot
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # 9h sáng VN
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 jobs:
@@ -21,4 +21,4 @@ jobs:
       - run: node index.js
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-          FASTMOSS_COOKIE: ${{ secrets.FASTMOSS_COOKIE }}
+          FASTMOSS_API_KEY: ${{ secrets.FASTMOSS_API_KEY }}
