@@ -3,76 +3,46 @@ import { google } from "googleapis";
 const SPREADSHEET_ID = "1M5RCNcFkoA89vJWdTv7Xr7NaUHxIdE4bzZ8gLNmMS1M";
 
 async function B1_FETCH_PRODUCTS() {
-  console.log("START_FETCH_PRODUCTS");
+  console.log("START_FETCH_API");
 
-  let allProducts = [];
+  const res = await fetch("https://developers.fastmoss.com/product/v1/rank/topSelling", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.FASTMOSS_API_KEY}`
+    },
+    body: JSON.stringify({
+      page: 1,
+      pagesize: 100
+    })
+  });
 
-  for (let page = 1; page <= 50; page++) {
-    const time = Math.floor(Date.now() / 1000);
-    const cnonce = Math.floor(Math.random() * 90000000) + 10000000;
+  const json = await res.json();
 
-    const url = `https://www.fastmoss.com/api/goods/saleRank?page=${page}&pagesize=10&order=1,2&region=VN&_time=${time}&cnonce=${cnonce}`;
+  const products = json.data.list.map(p => ({
+    id: p.product_id,
+    name: p.title,
+    price: p.price,
+    sold: p.sold_count,
+    shop: p.shop_name || "",
+    link: p.detail_url
+  }));
 
-    const res = await fetch(url, {
-      headers: {
-  "user-agent": "Mozilla/5.0",
-  "referer": "https://www.fastmoss.com/vi/e-commerce/saleslist?region=VN",
-  "cookie": process.env.FASTMOSS_COOKIE
-}
-    });
+  console.log("FETCHED:", products.length);
 
-    const json = await res.json();
-
-    if (!json.data || !json.data.rank_list) {
-      console.log(`PAGE_${page}_NO_DATA`);
-      continue;
-    }
-
-    const products = json.data.rank_list.map(p => ({
-      id: p.product_id,
-      name: p.title,
-      price: p.real_price,
-      sold: p.sold_count,
-      saleAmount: p.sale_amount,
-      shop: p.shop_info?.name || "",
-      category: p.category_name?.join(", ") || "",
-      link: p.detail_url
-    }));
-
-    console.log(`PAGE_${page}_OK:`, products.length);
-    allProducts = allProducts.concat(products);
-  }
-
-  console.log("TOTAL_RAW_FETCHED:", allProducts.length);
-  return allProducts;
+  return products;
 }
 
 function B3_FILTER_TRASH(products) {
-  const clean = [];
-  const seen = new Set();
-
-  for (const p of products) {
+  return products.filter(p => {
     const name = p.name.toLowerCase();
 
-    const isTrash =
+    return !(
       name.includes("thư cảm ơn") ||
-      name.includes("cảm ơn") ||
       name.includes("quà tặng") ||
-      name.includes("thank") ||
-      name.includes("gift");
-
-    if (isTrash) continue;
-    if (seen.has(p.id)) continue;
-    if (!p.link.includes("region=VN")) continue;
-
-    seen.add(p.id);
-    clean.push(p);
-
-    if (clean.length >= 100) break;
-  }
-
-  console.log("CLEAN_PRODUCTS:", clean.length);
-  return clean;
+      name.includes("gift")
+    );
+  });
 }
 
 async function B4_UPDATE_GOOGLE_SHEETS(products) {
@@ -85,23 +55,21 @@ async function B4_UPDATE_GOOGLE_SHEETS(products) {
   const today = new Date().toLocaleDateString("vi-VN");
 
   const values = [
-    ["date", "id", "name", "price", "sold", "saleAmount", "shop", "category", "link"],
+    ["date", "id", "name", "price", "sold", "shop", "link"],
     ...products.map(p => [
       today,
       p.id,
       p.name,
       p.price,
       p.sold,
-      p.saleAmount,
       p.shop,
-      p.category,
       p.link
     ])
   ];
 
   await sheets.spreadsheets.values.clear({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!A:I"
+    range: "Sheet1!A:G"
   });
 
   await sheets.spreadsheets.values.update({
@@ -111,10 +79,10 @@ async function B4_UPDATE_GOOGLE_SHEETS(products) {
     requestBody: { values }
   });
 
-  console.log("B4_UPDATE_GOOGLE_SHEETS_OK");
+  console.log("DONE_UPDATE_SHEET");
 }
 
-const rawData = await B1_FETCH_PRODUCTS();
-const cleanData = B3_FILTER_TRASH(rawData);
+const raw = await B1_FETCH_PRODUCTS();
+const clean = B3_FILTER_TRASH(raw);
 
-await B4_UPDATE_GOOGLE_SHEETS(cleanData);
+await B4_UPDATE_GOOGLE_SHEETS(clean);
