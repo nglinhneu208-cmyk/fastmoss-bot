@@ -8,7 +8,10 @@ async function B1_FETCH_PRODUCTS() {
   let allProducts = [];
 
   for (let page = 1; page <= 50; page++) {
-    const url = `https://www.fastmoss.com/api/goods/saleRank?page=${page}&pagesize=10&order=1,2&region=VN&_time=1777696684&cnonce=53296119`;
+    const time = Math.floor(Date.now() / 1000);
+    const cnonce = Math.floor(Math.random() * 90000000) + 10000000;
+
+    const url = `https://www.fastmoss.com/api/goods/saleRank?page=${page}&pagesize=10&order=1,2&region=VN&_time=${time}&cnonce=${cnonce}`;
 
     const res = await fetch(url, {
       headers: {
@@ -18,6 +21,11 @@ async function B1_FETCH_PRODUCTS() {
     });
 
     const json = await res.json();
+
+    if (!json.data || !json.data.rank_list) {
+      console.log(`PAGE_${page}_NO_DATA`);
+      continue;
+    }
 
     const products = json.data.rank_list.map(p => ({
       id: p.product_id,
@@ -62,9 +70,7 @@ function B3_FILTER_TRASH(products) {
     if (clean.length >= 100) break;
   }
 
-  console.log("B3_FILTER_TRASH_OK");
-  console.log("CLEAN_100:", clean.length);
-
+  console.log("CLEAN_PRODUCTS:", clean.length);
   return clean;
 }
 
