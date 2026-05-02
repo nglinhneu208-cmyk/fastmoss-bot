@@ -12,7 +12,8 @@ async function B1_FETCH_100_PRODUCTS() {
 
     const res = await fetch(url, {
       headers: {
-        "user-agent": "Mozilla/5.0"
+        "user-agent": "Mozilla/5.0",
+        "referer": "https://www.fastmoss.com/vi/e-commerce/saleslist?region=VN"
       }
     });
 
@@ -30,7 +31,6 @@ async function B1_FETCH_100_PRODUCTS() {
     }));
 
     console.log(`PAGE_${page}_OK:`, products.length);
-
     allProducts = allProducts.concat(products);
   }
 
@@ -64,29 +64,48 @@ async function B4_UPDATE_GOOGLE_SHEETS(products) {
   });
 
   const sheets = google.sheets({ version: "v4", auth });
-
   const today = new Date().toLocaleDateString("vi-VN");
 
-  const values = products.map(p => [
-    today,
-    p.id,
-    p.name,
-    p.price,
-    p.sold,
-    p.saleAmount,
-    p.shop,
-    p.category,
-    p.link
-  ]);
+  const uniqueProducts = [];
+  const seen = new Set();
 
-  await sheets.spreadsheets.values.append({
+  for (const p of products) {
+    if (seen.has(p.id)) continue;
+    if (!p.link.includes("region=VN")) continue;
+
+    seen.add(p.id);
+    uniqueProducts.push(p);
+  }
+
+  const values = [
+    ["date", "id", "name", "price", "sold", "saleAmount", "shop", "category", "link"],
+    ...uniqueProducts.map(p => [
+      today,
+      p.id,
+      p.name,
+      p.price,
+      p.sold,
+      p.saleAmount,
+      p.shop,
+      p.category,
+      p.link
+    ])
+  ];
+
+  await sheets.spreadsheets.values.clear({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!A:I",
+    range: "Sheet1!A:I"
+  });
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "Sheet1!A1",
     valueInputOption: "USER_ENTERED",
     requestBody: { values }
   });
 
   console.log("B4_UPDATE_GOOGLE_SHEETS_OK");
+  console.log("FINAL_ROWS:", uniqueProducts.length);
 }
 
 const rawData = await B1_FETCH_100_PRODUCTS();
