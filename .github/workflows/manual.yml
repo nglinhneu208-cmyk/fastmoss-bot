@@ -17,3 +17,5 @@ jobs:
       - run: npm install
 
       - run: node index.js
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
