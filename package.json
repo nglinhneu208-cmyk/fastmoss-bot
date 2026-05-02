@@ -1,6 +1,6 @@
 {
-  "name": "fastmoss-bot",
-  "version": "1.0.0",
-  "main": "index.js",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
 }
